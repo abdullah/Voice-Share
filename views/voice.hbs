@@ -1,0 +1,241 @@
+  <style>
+    body{
+
+    }
+  </style>
+<canvas id="myCanvas" width="200" height="200" />
+<script>
+$(document).ready(function() {
+    var canvas = document.getElementById('myCanvas'),
+    elemLeft = canvas.offsetLeft,
+    elemTop = canvas.offsetTop,
+    ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+   socket.on('getVoice',  function  (data) {
+      setSession(data.rnd, data.news,function (stat) {
+        if (stat) {
+          setAudio(data.news)
+        };
+      });
+    })
+
+
+   socket.on('news', function (data) {
+     if (!data.home) {
+        if(data.deleted){
+          for (var i = 0; i < circles.length; i++) {
+              if (circles[i].sound == data.deleted) {
+                 circles.splice(i, 1);
+              };
+          };
+        }
+
+        console.log(data.deleted);
+        console.log(circles);
+        newCircle(data.news)
+        drawAll ()
+     }else{
+        //console.log(data.news);
+     }
+    })
+  function setAudio (voices) {
+     $('audio').remove()
+     setTimeout(function  () {
+     $('body').append('<audio src="'+voices+'" autoplay style="display:none"></audio>');
+     }, 100);
+  }
+
+  function setSession (a,b , callback) {
+    setTimeout(function  () {
+        sessionStorage.setItem(a, b);
+       callback(true); 
+    }, 0);
+  } 
+
+  function getSession (a, callback) {
+    setTimeout(function  () {
+       var t =  sessionStorage.getItem(a);
+       if (t !== null) {
+         callback(true,t); 
+       }else{
+         callback(false,t); 
+       }
+    }, 0);
+  }
+
+// Add event listener for `click` events.
+canvas.addEventListener('click', function(event) {
+    var x = event.pageX - elemLeft,
+        y = event.pageY - elemTop;
+    console.log(x, y);
+    circles.forEach(function(element) {
+        if (Math.pow(x-element.x,2)+Math.pow(y-element.y,2) < Math.pow( element.radius,2)) {
+            console.log(element);;
+            console.log(element.color = "black");
+              var i = sessionStorage.length;
+              if (i > 2) {
+                while(i--) {
+                  var key = sessionStorage.key(i);
+                  sessionStorage.removeItem(key);
+                }
+              };
+              
+              var elemrnd =  element.sound;
+              var voices ;
+              getSession(elemrnd,function  (stat,stroger) {
+                if (!stat) {
+                   socket.emit('getVoice', { data : elemrnd})
+                }else{
+                    voices = stroger;
+                    setAudio(voices)
+                }
+              })
+            drawAll ()
+        }
+    });
+
+}, false);
+  
+// canvas variables
+var cw = canvas.width;
+var ch = canvas.height;
+
+// an array of circle objects
+var circles = [];
+for (var i = 0; i < 50; i++) {
+    
+}
+
+
+
+// animation variables
+
+function newCircle(sound) {
+    var r = 10 + Math.random() * 15;
+    var x = Math.random() * (cw-2*r) + r;
+    var y = Math.random() * (ch-2*r) + r;
+
+    // make sure new circle doesn't overlap any existing circles
+    while (true) {
+        var hit = 0;
+        for (var i = 0; i < circles.length; i++) {
+            var circle = circles[i];
+            var dx = x - circle.x;
+            var dy = y - circle.y;
+            var rr = r + circle.radius;
+            if (dx * dx + dy * dy < rr * rr) {
+                hit++;
+            }
+        }
+        // new circle doesn't overlap any other, so break
+        if (hit == 0) {
+            break;
+        }
+    var x = Math.random() * (cw-2*r) + r;
+    var y = Math.random() * (ch-2*r) + r;
+    }
+
+    // push a new circle into circles
+    circles.push({
+        x: x,
+        y: y,
+        radius: r,
+        color: randomColor(),
+        countdown: 500 + Math.random() * 1000,
+        sound : sound
+    });
+
+
+
+}
+socket.emit('first', { first: true })
+socket.on('first',  function  (data) {
+  for (var i = 0; i < data.news.length; i++) {
+    newCircle(data.news[i]);
+  };
+  drawAll();
+});
+
+function drawAll() {
+    ctx.clearRect(0, 0, cw, ch);
+    for (var i = 0; i < circles.length; i++) {
+        var circle = circles[i];
+        ctx.beginPath();
+        ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.fillStyle = circle.color;
+        ctx.fill();
+    }
+}
+
+function randomColor() {
+    return ('#' + Math.floor(Math.random() * 16777215).toString(16));
+}
+
+
+
+});
+
+</script>
+<script>
+  $(document).ready(function() {
+
+
+    var socket = io.connect('http://localhost:3000');
+
+    /*  socket.emit('first', { first: true })
+    socket.on('first',  function  (data) {
+      for (var i = 0; i < data.news.length; i++) {
+        $('body').append('<a class="voice anim" datahref="'+data.news[i]+'">'+data.news[i]+'</a>');
+      };
+    })*/
+
+   /* socket.on('getVoice',  function  (data) {
+      setSession(data.rnd, data.news,function (stat) {
+        if (stat) {
+          setAudio(data.news)
+        };
+      });
+    })*/
+
+    $(document).on('click', 'a.voice' , function  () {
+      /*
+  var i = sessionStorage.length;
+      if (i > 4) {
+        while(i--) {
+          var key = sessionStorage.key(i);
+          sessionStorage.removeItem(key);
+        }
+      };
+      
+      var elemrnd =  $(this).attr('datahref');
+      var voices ;
+      getSession(elemrnd,function  (stat,stroger) {
+        if (!stat) {
+           socket.emit('getVoice', { data : elemrnd})
+        }else{
+            voices = stroger;
+            setAudio(voices)
+        }
+      })
+      */
+
+    });
+
+    /*
+socket.on('news', function (data) {
+       if (!data.home) {
+          if(data.deleted){
+            $('a[datahref='+data.deleted+']').remove();
+          }
+          $('body').append('<a class="voice animation" datahref="'+data.news+'">'+data.news+'</a>');
+       }else{
+          //console.log(data.news);
+       }
+      })
+    */
+
+  });
+</script>
