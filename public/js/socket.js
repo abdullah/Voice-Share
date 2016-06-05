@@ -1,1 +1,3 @@
- var socket = io.connect('http://localhost:3000');
+var os = require("os");
+os.hostname();
+var socket = io.connect(process.env.HOST+process.env.PORT);
